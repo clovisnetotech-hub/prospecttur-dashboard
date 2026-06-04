@@ -1,24 +1,20 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-export type Lead = {
-	id: number;
-	razao_social: string;
-	cnae: string;
-	instagram: string | null;
-	lead_score: number;
-	justificativa_ia: string | null;
-};
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
-let client: SupabaseClient | null = null;
+console.log('Supabase URL:', supabaseUrl ? 'Configurado' : 'NÃO CONFIGURADO');
+console.log('Supabase Key:', supabaseAnonKey ? 'Configurado' : 'NÃO CONFIGURADO');
+
+let supabase: SupabaseClient | null = null;
+
+if (supabaseUrl && supabaseAnonKey) {
+	supabase = createClient(supabaseUrl, supabaseAnonKey);
+	console.log('Supabase client criado com sucesso');
+} else {
+	console.error('Credenciais do Supabase não configuradas!');
+}
 
 export function getSupabase(): SupabaseClient | null {
-	if (client) return client;
-
-	const url = import.meta.env.PUBLIC_SUPABASE_URL;
-	const key = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
-
-	if (!url || !key) return null;
-
-	client = createClient(url, key);
-	return client;
+	return supabase;
 }
