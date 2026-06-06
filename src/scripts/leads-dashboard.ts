@@ -6,6 +6,8 @@ type ScoreTier = 'all' | 'high' | 'medium' | 'low';
 interface DashboardConfig {
 	initialLeads: Lead[];
 	initialError: string | null;
+	supabaseUrl: string;
+	supabaseAnonKey: string;
 }
 
 function escapeHtml(str: string): string {
@@ -116,7 +118,12 @@ function emptyRow(message: string): string {
 	</tr>`;
 }
 
-export function initLeadsDashboard({ initialLeads, initialError }: DashboardConfig): void {
+export function initLeadsDashboard({
+	initialLeads,
+	initialError,
+	supabaseUrl,
+	supabaseAnonKey,
+}: DashboardConfig): void {
 	let allLeads: Lead[] = initialLeads;
 
 	const tbody = document.getElementById('leads-tbody');
@@ -131,10 +138,8 @@ export function initLeadsDashboard({ initialLeads, initialError }: DashboardConf
 	const errorMessage = document.getElementById('error-message');
 	const tableWrapper = document.getElementById('table-wrapper');
 
-	const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-	const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 	const supabase =
-		supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+		supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
 	function setLoading(loading: boolean): void {
 		if (!tbody) return;

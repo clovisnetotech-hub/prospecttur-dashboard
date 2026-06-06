@@ -23,7 +23,12 @@ if (!supabase) {
 }
 
 const cnaes = [...new Set(initialLeads.map((lead) => lead.cnae).filter(Boolean))].sort();
-const initialPayload = JSON.stringify({ initialLeads, initialError });
+const initialPayload = JSON.stringify({
+	initialLeads,
+	initialError,
+	supabaseUrl: import.meta.env.PUBLIC_SUPABASE_URL ?? '',
+	supabaseAnonKey: import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '',
+});
 ---
 
 <!doctype html>
