@@ -1,7 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Lead } from '../lib/supabase';
-
-const LEADS_QUERY = 'id, razao_social, cnae, instagram, lead_score, justificativa_ia';
+import { LEADS_QUERY, type Lead } from '../lib/supabase';
 
 type ScoreTier = 'all' | 'high' | 'medium' | 'low';
 

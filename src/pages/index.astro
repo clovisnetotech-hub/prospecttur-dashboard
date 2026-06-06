@@ -1,828 +1,192 @@
 ---
 import '../styles/global.css';
+import { getSupabase, LEADS_QUERY, type Lead } from '../lib/supabase';
 
-const leads = [
-  {
-    id: '1',
-    razao_social: 'Agencia Viaje Bem Ltda',
-    cnpj: '12.345.678/0001-90',
-    email: 'contato@viajebem.com.br',
-    telefone: '11999990001',
-    whatsapp_valido: true,
-    cidade: 'Sao Paulo',
-    estado: 'SP',
-    regiao: 'Sudeste',
-    cnae: '7911-2/00',
-    cnae_descricao: 'Agencias de viagens',
-    tempo_mercado_anos: 12,
-    website: 'https://viajebem.com.br',
-    website_ativo: true,
-    google_maps_url: 'https://maps.google.com/viajebem',
-    google_maps_ativo: true,
-    media_reviews: 4.8,
-    total_reviews: 342,
-    instagram: 'https://instagram.com/viajebem',
-    instagram_ativo: true,
-    instagram_seguidores: 15200,
-    facebook: 'https://facebook.com/viajebem',
-    facebook_ativo: true,
-    score_fit_estrutural: 38,
-    score_oportunidade: 34,
-    score_risco: 0,
-    lead_score: 92,
-    prioridade: 'Alta',
-    justificativa_ia: 'Agencia consolidada com 12 anos de mercado, presenca digital forte e excelente reputacao.',
-    recomendacao_ia: 'Contato imediato. Apresentar produtos internacionais exclusivos.'
-  },
-  {
-    id: '2',
-    razao_social: 'Roteiros Exclusivos Ltda',
-    cnpj: '23.456.789/0001-01',
-    email: 'contato@roteirosexclusivos.com.br',
-    telefone: '21988880002',
-    whatsapp_valido: true,
-    cidade: 'Rio de Janeiro',
-    estado: 'RJ',
-    regiao: 'Sudeste',
-    cnae: '7911-2/00',
-    cnae_descricao: 'Agencias de viagens',
-    tempo_mercado_anos: 4,
-    website: 'https://roteirosexclusivos.com.br',
-    website_ativo: true,
-    google_maps_url: 'https://maps.google.com/roteirosexclusivos',
-    google_maps_ativo: true,
-    media_reviews: 4.6,
-    total_reviews: 89,
-    instagram: 'https://instagram.com/roteirosexclusivos',
-    instagram_ativo: true,
-    instagram_seguidores: 5800,
-    facebook: null,
-    facebook_ativo: false,
-    score_fit_estrutural: 32,
-    score_oportunidade: 36,
-    score_risco: 0,
-    lead_score: 88,
-    prioridade: 'Alta',
-    justificativa_ia: 'Agencia em crescimento no RJ com forte investimento em presenca digital.',
-    recomendacao_ia: 'Prioridade alta. Oferecer treinamento e suporte.'
-  },
-  {
-    id: '3',
-    razao_social: 'Mundo Viagens e Turismo Ltda',
-    cnpj: '34.567.890/0001-12',
-    email: 'contato@mundoviagens.com.br',
-    telefone: '11977770003',
-    whatsapp_valido: true,
-    cidade: 'Sao Paulo',
-    estado: 'SP',
-    regiao: 'Sudeste',
-    cnae: '7911-2/00',
-    cnae_descricao: 'Agencias de viagens',
-    tempo_mercado_anos: 8,
-    website: 'https://mundoviagens.com.br',
-    website_ativo: true,
-    google_maps_url: 'https://maps.google.com/mundoviagens',
-    google_maps_ativo: true,
-    media_reviews: 4.5,
-    total_reviews: 156,
-    instagram: 'https://instagram.com/mundoviagens',
-    instagram_ativo: true,
-    instagram_seguidores: 8900,
-    facebook: 'https://facebook.com/mundoviagens',
-    facebook_ativo: true,
-    score_fit_estrutural: 35,
-    score_oportunidade: 30,
-    score_risco: 0,
-    lead_score: 85,
-    prioridade: 'Alta',
-    justificativa_ia: 'Agencia de medio porte com operacao solida em SP.',
-    recomendacao_ia: 'Apresentar produtos diferenciados para destinos especificos.'
-  },
-  {
-    id: '4',
-    razao_social: 'Paraiso Turismo e Lazer Ltda',
-    cnpj: '45.678.901/0001-23',
-    email: 'contato@paraisoturismo.com.br',
-    telefone: '85966660004',
-    whatsapp_valido: true,
-    cidade: 'Fortaleza',
-    estado: 'CE',
-    regiao: 'Nordeste',
-    cnae: '7911-2/00',
-    cnae_descricao: 'Agencias de viagens',
-    tempo_mercado_anos: 7,
-    website: 'https://paraisoturismo.com.br',
-    website_ativo: true,
-    google_maps_url: 'https://maps.google.com/paraisoturismo',
-    google_maps_ativo: true,
-    media_reviews: 4.7,
-    total_reviews: 203,
-    instagram: 'https://instagram.com/paraisoturismo',
-    instagram_ativo: true,
-    instagram_seguidores: 11500,
-    facebook: 'https://facebook.com/paraisoturismo',
-    facebook_ativo: false,
-    score_fit_estrutural: 33,
-    score_oportunidade: 29,
-    score_risco: 0,
-    lead_score: 82,
-    prioridade: 'Alta',
-    justificativa_ia: 'Agencia regional forte no Nordeste com excelente presenca digital.',
-    recomendacao_ia: 'Contato prioritario. Atendimento especializado para regiao Nordeste.'
-  }
-];
+let initialLeads: Lead[] = [];
+let initialError: string | null = null;
 
-const countAlta = leads.filter(l => l.prioridade === 'Alta').length;
-const countMedia = leads.filter(l => l.prioridade === 'Media').length;
-const countBaixa = leads.filter(l => l.prioridade === 'Baixa').length;
-const scoreMedio = leads.length > 0 ? Math.round(leads.reduce((acc, l) => acc + l.lead_score, 0) / leads.length) : 0;
-const countWhatsapp = leads.filter(l => l.whatsapp_valido).length;
-const cnaes = [...new Set(leads.map(l => l.cnae).filter(Boolean))].sort();
-const regioes = [...new Set(leads.map(l => l.regiao).filter(Boolean))].sort();
+const supabase = getSupabase();
+
+if (!supabase) {
+	initialError = 'Credenciais do Supabase nao configuradas.';
+} else {
+	const { data, error } = await supabase
+		.from('leads')
+		.select(LEADS_QUERY)
+		.order('lead_score', { ascending: false });
+
+	if (error) {
+		initialError = error.message;
+	} else {
+		initialLeads = (data ?? []) as Lead[];
+	}
+}
+
+const cnaes = [...new Set(initialLeads.map((lead) => lead.cnae).filter(Boolean))].sort();
+const initialPayload = JSON.stringify({ initialLeads, initialError });
 ---
 
+<!doctype html>
 <html lang="pt-BR">
-<head>
-<meta charset="utf-8" />
-<link rel="icon" href="/favicon.ico" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Prospecttur - Prospectacao Inteligente B2B</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-</head>
-<body class="min-h-screen bg-slate-50 font-[Inter,sans-serif] text-slate-900 antialiased">
-<div class="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
-<div class="absolute -top-40 right-0 h-96 w-96 rounded-full bg-indigo-100/40 blur-3xl"></div>
-<div class="absolute -bottom-40 left-0 h-96 w-96 rounded-full bg-violet-100/40 blur-3xl"></div>
-</div>
-
-<div class="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-
-<header class="mb-8">
-<div class="flex flex-col gap-6 rounded-2xl border border-slate-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:p-8">
-<div>
-<h1 class="bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-800 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-4xl">Prospecttur</h1>
-<p class="mt-2 text-base text-slate-500 sm:text-lg">Prospectacao Inteligente B2B para o Turismo</p>
-</div>
-<div class="flex flex-wrap gap-3">
-<div class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700">
-<span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-<span id="countAlta">{countAlta}</span> Alta
-</div>
-<div class="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm font-semibold text-amber-700">
-<span class="h-2 w-2 rounded-full bg-amber-500"></span>
-<span id="countMedia">{countMedia}</span> Media
-</div>
-<div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-semibold text-slate-600">
-<span class="h-2 w-2 rounded-full bg-slate-400"></span>
-<span id="countBaixa">{countBaixa}</span> Baixa
-</div>
-</div>
-</div>
-</header>
-
-<div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-<div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-<p class="text-xs font-medium uppercase tracking-wide text-slate-500">Total de Leads</p>
-<p class="mt-1 text-3xl font-bold text-slate-900" id="countTotal">{leads.length}</p>
-</div>
-<div class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-5 shadow-sm">
-<p class="text-xs font-medium uppercase tracking-wide text-emerald-600">Alta Prioridade</p>
-<p class="mt-1 text-3xl font-bold text-emerald-700" id="countAltaCard">{countAlta}</p>
-<p class="mt-1 text-xs text-emerald-600" id="pctAlta">{leads.length > 0 ? Math.round(countAlta/leads.length*100) : 0}% do total</p>
-</div>
-<div class="rounded-xl border border-blue-200 bg-blue-50/50 p-5 shadow-sm">
-<p class="text-xs font-medium uppercase tracking-wide text-blue-600">Score Medio</p>
-<p class="mt-1 text-3xl font-bold text-blue-700" id="scoreMedio">{scoreMedio}</p>
-</div>
-<div class="rounded-xl border border-purple-200 bg-purple-50/50 p-5 shadow-sm">
-<p class="text-xs font-medium uppercase tracking-wide text-purple-600">Com WhatsApp</p>
-<p class="mt-1 text-3xl font-bold text-purple-700" id="countWhatsApp">{countWhatsapp}</p>
-</div>
-</div>
-
-<section class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-<div class="border-b border-slate-100 bg-slate-50/50 p-4 sm:p-6">
-<h2 class="mb-3 text-sm font-semibold text-slate-900">Filtros Avancados</h2>
-<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-<div class="space-y-1.5">
-<label for="searchInput" class="text-xs font-medium uppercase tracking-wide text-slate-500">Buscar</label>
-<input id="searchInput" type="search" placeholder="Razao social..." class="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm shadow-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600" />
-</div>
-<div class="space-y-1.5">
-<label for="prioridadeFilter" class="text-xs font-medium uppercase tracking-wide text-slate-500">Prioridade</label>
-<select id="prioridadeFilter" class="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600">
-<option value="all">Todas</option>
-<option value="Alta">Alta</option>
-<option value="Media">Media</option>
-<option value="Baixa">Baixa</option>
-</select>
-</div>
-<div class="space-y-1.5">
-<label for="regiaoFilter" class="text-xs font-medium uppercase tracking-wide text-slate-500">Regiao</label>
-<select id="regiaoFilter" class="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600">
-<option value="all">Todas</option>
-{regioes.map(r => <option value={r}>{r}</option>)}
-</select>
-</div>
-<div class="space-y-1.5">
-<label for="cnaeFilter" class="text-xs font-medium uppercase tracking-wide text-slate-500">CNAE</label>
-<select id="cnaeFilter" class="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600">
-<option value="all">Todos</option>
-{cnaes.map(c => <option value={c}>{c}</option>)}
-</select>
-</div>
-<div class="space-y-1.5">
-<label for="tempoFilter" class="text-xs font-medium uppercase tracking-wide text-slate-500">Tempo Mercado</label>
-<select id="tempoFilter" class="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600">
-<option value="all">Todos</option>
-<option value="nova">Nova (ate 3 anos)</option>
-<option value="media">Media (4-7 anos)</option>
-<option value="consolidada">Consolidada (8+ anos)</option>
-</select>
-</div>
-</div>
-</div>
-
-<div class="overflow-x-auto">
-<table class="w-full min-w-[1100px] text-left text-sm">
-<thead>
-<tr class="border-b border-slate-100 bg-white">
-<th class="px-4 py-3.5 font-semibold text-slate-600">Lead</th>
-<th class="px-4 py-3.5 font-semibold text-slate-600">Local</th>
-<th class="px-4 py-3.5 font-semibold text-slate-600">CNAE</th>
-<th class="px-4 py-3.5 font-semibold text-slate-600">Contato</th>
-<th class="px-4 py-3.5 font-semibold text-slate-600">Score</th>
-<th class="px-4 py-3.5 font-semibold text-slate-600">Analise IA</th>
-<th class="px-4 py-3.5 font-semibold text-slate-600">Acoes</th>
-</tr>
-</thead>
-<tbody id="leadsTbody" class="divide-y divide-slate-100">
-{leads.map((lead) => (
-<tr class="group transition-colors hover:bg-slate-50/80"
-data-razao={lead.razao_social.toLowerCase()}
-data-prioridade={lead.prioridade}
-data-regiao={lead.regiao}
-data-cnae={lead.cnae}
-data-tempo={lead.tempo_mercado_anos}>
-<td class="px-4 py-4">
-<div class="font-semibold text-slate-900">{lead.razao_social}</div>
-<div class="text-xs text-slate-500">{lead.tempo_mercado_anos} anos de mercado</div>
-<div class="mt-1">
-<span class:list={['inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold', lead.prioridade === 'Alta' ? 'bg-emerald-100 text-emerald-800' : lead.prioridade === 'Media' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600']}>
-{lead.prioridade === 'Alta' ? '🔥 ' : ''}{lead.prioridade} Prioridade
-</span>
-</div>
-</td>
-<td class="px-4 py-4 text-slate-600">
-<div>{lead.cidade}</div>
-<div class="text-xs text-slate-500">{lead.estado} * {lead.regiao}</div>
-</td>
-<td class="px-4 py-4">
-<span class="inline-flex rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs font-medium text-slate-600">{lead.cnae}</span>
-<div class="mt-1 text-xs text-slate-500">{lead.cnae_descricao}</div>
-</td>
-<td class="px-4 py-4">
-<div class="flex flex-wrap gap-1.5">
-{lead.telefone && <span class="rounded bg-green-50 px-1.5 py-0.5 text-xs text-green-700">📞 {lead.telefone}</span>}
-{lead.email && <span class="rounded bg-blue-50 px-1.5 py-0.5 text-xs text-blue-700">✉️</span>}
-{lead.whatsapp_valido && <span class="rounded bg-emerald-50 px-1.5 py-0.5 text-xs text-emerald-700">💬</span>}
-{lead.instagram && <span class="rounded bg-pink-50 px-1.5 py-0.5 text-xs text-pink-700">📸</span>}
-{lead.website && <span class="rounded bg-indigo-50 px-1.5 py-0.5 text-xs text-indigo-700">🌐</span>}
-</div>
-</td>
-<td class="px-4 py-4">
-<div class="flex flex-col gap-1">
-<span class:list={['inline-flex min-w-[3rem] items-center justify-center rounded-full px-2.5 py-0.5 text-sm font-bold', lead.lead_score >= 70 ? 'bg-emerald-100 text-emerald-800' : lead.lead_score >= 40 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800']}>
-{lead.lead_score}
-</span>
-<div class="flex gap-1 text-xs text-slate-400">
-<span>F:{lead.score_fit_estrutural}</span>
-<span>O:{lead.score_oportunidade}</span>
-{lead.score_risco > 0 && <span class="text-red-400">R:-{lead.score_risco}</span>}
-</div>
-</div>
-</td>
-<td class="max-w-xs px-4 py-4">
-<p class="text-xs text-slate-600 line-clamp-3">{lead.justificativa_ia || '—'}</p>
-</td>
-<td class="px-4 py-4">
-<div class="flex items-center gap-1.5">
-{lead.instagram && (
-<a href={lead.instagram} target="_blank" rel="noopener noreferrer" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 shadow-sm hover:text-pink-600" title="Instagram">📸</a>
-)}
-{lead.website && (
-<a href={lead.website} target="_blank" rel="noopener noreferrer" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 shadow-sm hover:text-blue-600" title="Website">🌐</a>
-)}
-<button type="button" class="copyBtn inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 shadow-sm hover:text-indigo-600" title="Copiar dados"
-data-razao={lead.razao_social}
-data-cnpj={lead.cnpj || ''}
-data-cidade={lead.cidade || ''}
-data-estado={lead.estado || ''}
-data-score={lead.lead_score}
-data-website={lead.website || ''}
-data-whatsapp={lead.telefone || ''}
-data-justificativa={lead.justificativa_ia || ''}
-data-recomendacao={lead.recomendacao_ia || ''}>📋</button>
-</div>
-</td>
-</tr>
-))}
-</tbody>
-</table>
-</div>
-
-<div id="noResults" class="hidden px-6 py-16 text-center">
-<p class="text-sm font-medium text-slate-700">Nenhum lead corresponde aos filtros</p>
-<p class="text-xs text-slate-400 mt-1">Tente ajustar os filtros.</p>
-</div>
-</section>
-
-<div id="toast" class="fixed bottom-6 right-6 z-50 hidden">
-<div class="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 shadow-lg">
-<span id="toastMsg">Dados copiados com sucesso!</span>
-</div>
-</div>
-
-<div id="cnpjModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm">
-<div class="mx-4 w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-<div class="mb-4 flex items-center justify-between">
-<h3 class="text-lg font-bold text-slate-900">🔍 Buscar Lead por CNPJ</h3>
-<button id="closeModal" class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">X</button>
-</div>
-<div class="space-y-4">
-<div>
-<label class="mb-1 block text-sm font-medium text-slate-700">CNPJ (apenas numeros)</label>
-<input id="cnpjInput" type="text" placeholder="12345678000190" maxlength="14" class="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-<p class="mt-1 text-xs text-slate-500">Serao aceitos apenas CNAEs de agencias de viagens</p>
-</div>
-<button id="buscarCnpjBtn" class="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">Buscar na Receita Federal</button>
-<div id="cnpjResult" class="hidden"></div>
-<div id="cnpjLoading" class="hidden text-center py-4">
-<div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600"></div>
-<p class="mt-2 text-sm text-slate-500">Buscando dados...</p>
-</div>
-<div id="cnpjAlert" class="hidden rounded-lg p-4"></div>
-</div>
-</div>
-</div>
-
-<button id="openCnpjModal" class="fixed bottom-6 left-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-2xl text-white shadow-lg hover:scale-110 hover:bg-indigo-700" title="Buscar CNPJ">🔍</button>
-
-<footer class="mt-10 text-center text-sm text-slate-400">
-&copy; {new Date().getFullYear()} Prospecttur. Prospectacao Inteligente para o Turismo.
-</footer>
-</div>
-
-<script>
-(function() {
-  'use strict';
-
-  var cnaesValidos = ['7911-2/00', '7912-1/00', '7990-2/00'];
-  var cnaesDescricao = {
-    '7911-2/00': 'Agencias de viagens',
-    '7912-1/00': 'Operadores turisticos',
-    '7990-2/00': 'Servicos de reservas e outros servicos de turismo'
-  };
-
-  function getRegiao(uf) {
-    var regioes = {
-      'Norte': ['AC', 'AP', 'AM', 'PA', 'RO', 'RR', 'TO'],
-      'Nordeste': ['AL', 'BA', 'CE', 'MA', 'PB', 'PE', 'PI', 'RN', 'SE'],
-      'Centro-Oeste': ['DF', 'GO', 'MT', 'MS'],
-      'Sudeste': ['ES', 'MG', 'RJ', 'SP'],
-      'Sul': ['PR', 'RS', 'SC']
-    };
-    for (var regiao in regioes) {
-      if (regioes[regiao].indexOf(uf) !== -1) return regiao;
-    }
-    return 'Outros';
-  }
-
-  function calcularScore(data) {
-    var fitEstrutural = 0;
-    var oportunidade = 0;
-    var risco = 0;
-
-    if (data.cnae_fiscal === '7911-2/00') fitEstrutural += 15;
-    else if (data.cnae_fiscal === '7912-1/00') fitEstrutural += 12;
-    else if (data.cnae_fiscal === '7990-2/00') fitEstrutural += 10;
-
-    if (data.situacao_cadastral === 'ATIVA') fitEstrutural += 10;
-    else if (data.situacao_cadastral === 'SUSPENSA') { fitEstrutural += 5; risco += 5; }
-    else if (data.situacao_cadastral === 'INAPTA') { risco += 15; }
-
-    if (data.ddd_telefone_1) fitEstrutural += 5;
-    if (data.ddd_telefone_2) fitEstrutural += 3;
-    if (data.email) fitEstrutural += 5;
-    if (data.capital_social && parseFloat(data.capital_social) > 0) {
-      if (parseFloat(data.capital_social) >= 100000) fitEstrutural += 5;
-      else if (parseFloat(data.capital_social) >= 30000) fitEstrutural += 3;
-      else fitEstrutural += 1;
-    }
-
-    var dataAbertura = new Date(data.data_inicio_atividade);
-    var anosMercado = Math.floor((new Date() - dataAbertura) / (365.25 * 24 * 60 * 60 * 1000));
-
-    if (anosMercado >= 10) oportunidade += 15;
-    else if (anosMercado >= 5) oportunidade += 12;
-    else if (anosMercado >= 3) oportunidade += 8;
-    else oportunidade += 5;
-
-    var municipiosGrandes = ['Sao Paulo', 'Rio de Janeiro', 'Belo Horizonte', 'Brasilia', 'Curitiba', 'Porto Alegre', 'Salvador', 'Fortaleza', 'Recife', 'Goiania'];
-    var cidadeGrande = false;
-    for (var i = 0; i < municipiosGrandes.length; i++) {
-      if (data.municipio && data.municipio.toLowerCase().indexOf(municipiosGrandes[i].toLowerCase()) !== -1) {
-        cidadeGrande = true;
-        break;
-      }
-    }
-    oportunidade += cidadeGrande ? 10 : 5;
-
-    if (data.porte === 'DEMAIS') oportunidade += 10;
-    else if (data.porte === 'MICRO EMPRESA') oportunidade += 8;
-    else if (data.porte === 'EMPRESA DE PEQUENO PORTE') oportunidade += 6;
-
-    if (anosMercado < 2) risco += 8;
-    if (!data.ddd_telefone_1) risco += 5;
-    if (!data.email) risco += 3;
-    if (data.capital_social && parseFloat(data.capital_social) < 10000) risco += 4;
-
-    fitEstrutural = Math.min(fitEstrutural, 40);
-    oportunidade = Math.min(oportunidade, 40);
-    risco = Math.min(risco, 20);
-
-    return {
-      fit_estrutural: fitEstrutural,
-      oportunidade: oportunidade,
-      risco: risco,
-      total: fitEstrutural + oportunidade - risco,
-      mercado_anos: anosMercado
-    };
-  }
-
-  function getPrioridade(score) {
-    if (score >= 60) return 'Alta';
-    if (score >= 40) return 'Media';
-    return 'Baixa';
-  }
-
-  function gerarAnalise(data, score, anosMercado) {
-    var partes = [];
-    if (score.risco > 10) partes.push('Alto risco');
-    if (score.fit_estrutural >= 20) partes.push('boa estrutura de contatos');
-    else partes.push('estrutura de contatos limitada');
-    partes.push(anosMercado + ' anos de mercado');
-    partes.push('CNAE ' + data.cnae_fiscal);
-    return 'Empresa em ' + data.municipio + '/' + data.uf + ' com ' + partes.join(', ') + '. Score: ' + score.total + '.';
-  }
-
-  function gerarRecomendacao(score, prioridade, anosMercado) {
-    if (prioridade === 'Alta') {
-      if (anosMercado >= 5) return 'Prioridade maxima. Contato imediato para apresentacao de produtos.';
-      return 'Alta prioridade. Bom potencial para parceria de longo prazo.';
-    }
-    if (prioridade === 'Media') {
-      if (score.fit_estrutural < 10) return 'Incluir em campanha de nutricao para obter mais dados de contato.';
-      return 'Potencial moderado. Acompanhar crescimento e reavaliar em 6 meses.';
-    }
-    return 'Prioridade baixa. Monitorar situacao cadastral e reavaliar futuramente.';
-  }
-
-  var searchInput = document.getElementById('searchInput');
-  var prioridadeFilter = document.getElementById('prioridadeFilter');
-  var regiaoFilter = document.getElementById('regiaoFilter');
-  var cnaeFilter = document.getElementById('cnaeFilter');
-  var tempoFilter = document.getElementById('tempoFilter');
-  var tbody = document.getElementById('leadsTbody');
-  var noResults = document.getElementById('noResults');
-  var table = tbody.closest('table');
-  var toast = document.getElementById('toast');
-  var toastMsg = document.getElementById('toastMsg');
-
-  function showToast(message) {
-    toastMsg.textContent = message;
-    toast.classList.remove('hidden');
-    setTimeout(function() { toast.classList.add('hidden'); }, 3000);
-  }
-
-  function filterTable() {
-    var search = searchInput.value.toLowerCase().trim();
-    var prioridade = prioridadeFilter.value;
-    var regiao = regiaoFilter.value;
-    var cnae = cnaeFilter.value;
-    var tempo = tempoFilter.value;
-    var rows = tbody.querySelectorAll('tr[data-razao]');
-    var visibleCount = 0;
-
-    rows.forEach(function(row) {
-      var razao = row.dataset.razao || '';
-      var rowPrioridade = row.dataset.prioridade || '';
-      var rowRegiao = row.dataset.regiao || '';
-      var rowCnae = row.dataset.cnae || '';
-      var rowTempo = parseInt(row.dataset.tempo) || 0;
-
-      var show = true;
-      if (search && razao.indexOf(search) === -1) show = false;
-      if (prioridade !== 'all' && rowPrioridade !== prioridade) show = false;
-      if (regiao !== 'all' && rowRegiao !== regiao) show = false;
-      if (cnae !== 'all' && rowCnae !== cnae) show = false;
-      if (tempo === 'nova' && rowTempo > 3) show = false;
-      if (tempo === 'media' && (rowTempo < 4 || rowTempo > 7)) show = false;
-      if (tempo === 'consolidada' && rowTempo < 8) show = false;
-
-      row.style.display = show ? '' : 'none';
-      if (show) visibleCount++;
-    });
-
-    if (visibleCount === 0) {
-      table.classList.add('hidden');
-      noResults.classList.remove('hidden');
-    } else {
-      table.classList.remove('hidden');
-      noResults.classList.add('hidden');
-    }
-  }
-
-  function copyLeadData(btn) {
-    var lines = [
-      'Lead: ' + btn.dataset.razao,
-      '',
-      'CNPJ: ' + (btn.dataset.cnpj || 'N/A'),
-      'Local: ' + btn.dataset.cidade + ', ' + btn.dataset.estado,
-      'Score: ' + btn.dataset.score,
-      '',
-      'Website: ' + (btn.dataset.website || 'N/A'),
-      'WhatsApp: ' + (btn.dataset.whatsapp || 'N/A'),
-      '',
-      'Analise IA:',
-      btn.dataset.justificativa,
-      '',
-      'Recomendacao:',
-      (btn.dataset.recomendacao || 'N/A')
-    ];
-    navigator.clipboard.writeText(lines.join('\n')).then(function() {
-      showToast('Dados copiados!');
-    }).catch(function() {
-      showToast('Erro ao copiar');
-    });
-  }
-
-  searchInput.addEventListener('input', filterTable);
-  prioridadeFilter.addEventListener('change', filterTable);
-  regiaoFilter.addEventListener('change', filterTable);
-  cnaeFilter.addEventListener('change', filterTable);
-  tempoFilter.addEventListener('change', filterTable);
-
-  document.querySelectorAll('.copyBtn').forEach(function(btn) {
-    btn.addEventListener('click', function() { copyLeadData(btn); });
-  });
-
-  function adicionarLeadNaTabela(lead) {
-    var tr = document.createElement('tr');
-    tr.className = 'group transition-colors hover:bg-slate-50/80 novo-lead';
-    tr.dataset.razao = lead.razao_social.toLowerCase();
-    tr.dataset.prioridade = lead.prioridade;
-    tr.dataset.regiao = lead.regiao;
-    tr.dataset.cnae = lead.cnae;
-    tr.dataset.tempo = lead.tempo_mercado_anos;
-
-    var prioridadeClass = lead.prioridade === 'Alta' ? 'bg-emerald-100 text-emerald-800' : lead.prioridade === 'Media' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600';
-    var scoreClass = lead.lead_score >= 70 ? 'bg-emerald-100 text-emerald-800' : lead.lead_score >= 40 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800';
-    var prioridadeIcon = lead.prioridade === 'Alta' ? '🔥 ' : '';
-
-    var html = '';
-    html += '<td class="px-4 py-4">';
-    html += '<div class="font-semibold text-slate-900">' + lead.razao_social + '</div>';
-    html += '<div class="text-xs text-slate-500">' + lead.tempo_mercado_anos + ' anos de mercado</div>';
-    html += '<div class="mt-1"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ' + prioridadeClass + '">' + prioridadeIcon + lead.prioridade + ' Prioridade</span></div>';
-    html += '</td>';
-    html += '<td class="px-4 py-4 text-slate-600"><div>' + lead.cidade + '</div><div class="text-xs text-slate-500">' + lead.estado + ' * ' + lead.regiao + '</div></td>';
-    html += '<td class="px-4 py-4"><span class="inline-flex rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs font-medium text-slate-600">' + lead.cnae + '</span><div class="mt-1 text-xs text-slate-500">' + lead.cnae_descricao + '</div></td>';
-    html += '<td class="px-4 py-4"><div class="flex flex-wrap gap-1.5">';
-    if (lead.telefone) html += '<span class="rounded bg-green-50 px-1.5 py-0.5 text-xs text-green-700">📞 ' + lead.telefone + '</span>';
-    if (lead.email) html += '<span class="rounded bg-blue-50 px-1.5 py-0.5 text-xs text-blue-700">✉️</span>';
-    if (lead.whatsapp_valido) html += '<span class="rounded bg-emerald-50 px-1.5 py-0.5 text-xs text-emerald-700">💬</span>';
-    html += '</div></td>';
-    html += '<td class="px-4 py-4"><div class="flex flex-col gap-1">';
-    html += '<span class="inline-flex min-w-[3rem] items-center justify-center rounded-full px-2.5 py-0.5 text-sm font-bold ' + scoreClass + '">' + lead.lead_score + '</span>';
-    html += '<div class="flex gap-1 text-xs text-slate-400"><span>F:' + lead.score_fit_estrutural + '</span><span>O:' + lead.score_oportunidade + '</span>';
-    if (lead.score_risco > 0) html += '<span class="text-red-400">R:-' + lead.score_risco + '</span>';
-    html += '</div></div></td>';
-    html += '<td class="max-w-xs px-4 py-4"><p class="text-xs text-slate-600 line-clamp-3">' + (lead.justificativa_ia || '—') + '</p></td>';
-    html += '<td class="px-4 py-4"><div class="flex items-center gap-1.5">';
-    if (lead.website) html += '<a href="' + lead.website + '" target="_blank" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 shadow-sm hover:text-blue-600">🌐</a>';
-    html += '<button type="button" class="copyBtn inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 shadow-sm hover:text-indigo-600" title="Copiar dados"';
-    html += ' data-razao="' + lead.razao_social + '" data-cnpj="' + (lead.cnpj || '') + '" data-cidade="' + (lead.cidade || '') + '" data-estado="' + (lead.estado || '') + '" data-score="' + lead.lead_score + '" data-website="' + (lead.website || '') + '" data-whatsapp="' + (lead.telefone || '') + '" data-justificativa="' + (lead.justificativa_ia || '') + '" data-recomendacao="' + (lead.recomendacao_ia || '') + '">📋</button>';
-    html += '</div></td>';
-
-    tr.innerHTML = html;
-    tbody.insertBefore(tr, tbody.firstChild);
-
-    tr.querySelector('.copyBtn').addEventListener('click', function() {
-      copyLeadData(tr.querySelector('.copyBtn'));
-    });
-
-    showToast('Lead adicionado: ' + lead.razao_social);
-
-    tr.classList.add('bg-emerald-50');
-    setTimeout(function() { tr.classList.remove('bg-emerald-50'); }, 3000);
-
-    atualizarContadores();
-  }
-
-  function atualizarContadores() {
-    var rows = tbody.querySelectorAll('tr[data-razao]');
-    var alta = 0, media = 0, baixa = 0, whatsapp = 0, totalScore = 0, count = 0;
-
-    rows.forEach(function(row) {
-      var btn = row.querySelector('.copyBtn');
-      var score = btn ? parseInt(btn.dataset.score) || 0 : 0;
-      var prioridade = row.dataset.prioridade;
-
-      if (prioridade === 'Alta') alta++;
-      else if (prioridade === 'Media') media++;
-      else baixa++;
-
-      if (row.querySelector('.bg-emerald-50')) whatsapp++;
-      totalScore += score;
-      count++;
-    });
-
-    document.getElementById('countAlta').textContent = alta;
-    document.getElementById('countMedia').textContent = media;
-    document.getElementById('countBaixa').textContent = baixa;
-    document.getElementById('countTotal').textContent = count;
-    document.getElementById('countAltaCard').textContent = alta;
-    document.getElementById('pctAlta').textContent = count > 0 ? Math.round(alta/count*100) + '% do total' : '0% do total';
-    document.getElementById('scoreMedio').textContent = count > 0 ? Math.round(totalScore/count) : 0;
-    document.getElementById('countWhatsApp').textContent = whatsapp;
-  }
-
-  var cnpjModal = document.getElementById('cnpjModal');
-  var openCnpjModalBtn = document.getElementById('openCnpjModal');
-  var closeModalBtn = document.getElementById('closeModal');
-  var cnpjInput = document.getElementById('cnpjInput');
-  var buscarCnpjBtn = document.getElementById('buscarCnpjBtn');
-  var cnpjResult = document.getElementById('cnpjResult');
-  var cnpjLoading = document.getElementById('cnpjLoading');
-  var cnpjAlert = document.getElementById('cnpjAlert');
-
-  openCnpjModalBtn.addEventListener('click', function() {
-    cnpjModal.classList.remove('hidden');
-    cnpjModal.classList.add('flex');
-    cnpjInput.focus();
-  });
-
-  closeModalBtn.addEventListener('click', function() {
-    cnpjModal.classList.add('hidden');
-    cnpjModal.classList.remove('flex');
-    cnpjResult.classList.add('hidden');
-    cnpjAlert.classList.add('hidden');
-    cnpjInput.value = '';
-  });
-
-  cnpjModal.addEventListener('click', function(e) {
-    if (e.target === cnpjModal) {
-      cnpjModal.classList.add('hidden');
-      cnpjModal.classList.remove('flex');
-    }
-  });
-
-  cnpjInput.addEventListener('input', function(e) {
-    var value = e.target.value.replace(/\D/g, '');
-    if (value.length > 14) value = value.substring(0, 14);
-    e.target.value = value;
-  });
-
-  buscarCnpjBtn.addEventListener('click', function() {
-    var cnpj = cnpjInput.value.replace(/\D/g, '');
-
-    if (cnpj.length !== 14) {
-      cnpjAlert.className = 'rounded-lg p-4 bg-amber-50 border border-amber-200';
-      cnpjAlert.innerHTML = '<p class="text-sm font-medium text-amber-800">CNPJ deve ter 14 digitos</p>';
-      cnpjAlert.classList.remove('hidden');
-      return;
-    }
-
-    cnpjLoading.classList.remove('hidden');
-    cnpjResult.classList.add('hidden');
-    cnpjAlert.classList.add('hidden');
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', 'https://brasilapi.com.br/api/cnpj/v1/' + cnpj, true);
-    xhr.onload = function() {
-      cnpjLoading.classList.add('hidden');
-
-      if (xhr.status !== 200) {
-        cnpjAlert.className = 'rounded-lg p-4 bg-red-50 border border-red-200';
-        cnpjAlert.innerHTML = '<p class="text-sm font-medium text-red-800">CNPJ nao encontrado na Receita Federal</p>';
-        cnpjAlert.classList.remove('hidden');
-        return;
-      }
-
-      var data = JSON.parse(xhr.responseText);
-      var cnae = data.cnae_fiscal;
-
-      if (cnaesValidos.indexOf(cnae) === -1) {
-        cnpjAlert.className = 'rounded-lg p-4 bg-red-50 border border-red-200';
-        cnpjAlert.innerHTML = '<p class="text-sm font-medium text-red-800">CNAE ' + cnae + ' nao e de agencia de viagens</p><p class="text-xs text-red-600 mt-1">Este sistema aceita apenas: 7911-2/00, 7912-1/00, 7990-2/00</p>';
-        cnpjAlert.classList.remove('hidden');
-        return;
-      }
-
-      var score = calcularScore(data);
-      var prioridade = getPrioridade(score.total);
-      var analise = gerarAnalise(data, score, score.mercado_anos);
-      var recomendacao = gerarRecomendacao(score, prioridade, score.mercado_anos);
-
-      var prioridadeBadgeClass = prioridade === 'Alta' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : prioridade === 'Media' ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200';
-
-      var html = '';
-      html += '<div class="space-y-4">';
-      html += '<div class="flex items-center justify-between border-b border-slate-200 pb-3">';
-      html += '<div><h4 class="text-lg font-bold text-slate-900">' + data.razao_social + '</h4><p class="text-sm text-slate-500">CNPJ: ' + data.cnpj + '</p></div>';
-      html += '<span class="rounded-full px-3 py-1 text-sm font-bold border ' + prioridadeBadgeClass + '">' + prioridade + '</span>';
-      html += '</div>';
-      html += '<div class="grid grid-cols-2 gap-3 text-sm">';
-      html += '<div class="bg-slate-50 rounded-lg p-2"><span class="text-slate-500 text-xs">Situacao</span><p class="font-medium">' + (data.descricao_situacao_cadastral || 'N/A') + '</p></div>';
-      html += '<div class="bg-slate-50 rounded-lg p-2"><span class="text-slate-500 text-xs">CNAE</span><p class="font-mono text-xs">' + cnae + '</p><p class="text-xs text-slate-500">' + (data.descricao_cnae_fiscal || cnaesDescricao[cnae]) + '</p></div>';
-      html += '<div class="bg-slate-50 rounded-lg p-2"><span class="text-slate-500 text-xs">Local</span><p class="font-medium">' + (data.municipio || 'N/A') + '/' + (data.uf || 'N/A') + '</p></div>';
-      html += '<div class="bg-slate-50 rounded-lg p-2"><span class="text-slate-500 text-xs">Abertura</span><p class="font-medium">' + (data.data_inicio_atividade || 'N/A') + '</p></div>';
-      html += '<div class="bg-slate-50 rounded-lg p-2"><span class="text-slate-500 text-xs">Telefone</span><p class="font-medium">' + (data.ddd_telefone_1 || 'N/A') + '</p></div>';
-      html += '<div class="bg-slate-50 rounded-lg p-2"><span class="text-slate-500 text-xs">Email</span><p class="font-medium text-xs break-all">' + (data.email || 'N/A') + '</p></div>';
-      html += '<div class="bg-slate-50 rounded-lg p-2"><span class="text-slate-500 text-xs">Capital Social</span><p class="font-medium">R$ ' + (data.capital_social ? parseFloat(data.capital_social).toLocaleString('pt-BR') : 'N/A') + '</p></div>';
-      html += '<div class="bg-slate-50 rounded-lg p-2"><span class="text-slate-500 text-xs">Porte</span><p class="font-medium">' + (data.porte || 'N/A') + '</p></div>';
-      html += '</div>';
-      html += '<div class="bg-indigo-50 rounded-lg p-4 border border-indigo-100">';
-      html += '<div class="flex items-center justify-between mb-3"><span class="text-sm font-medium text-indigo-900">Score do Lead</span><span class="text-3xl font-bold text-indigo-700">' + score.total + '</span></div>';
-      html += '<div class="grid grid-cols-3 gap-2 text-center text-xs">';
-      html += '<div class="bg-white rounded p-2"><p class="font-bold text-emerald-600">' + score.fit_estrutural + '</p><p class="text-slate-500">Fit Estrutural</p></div>';
-      html += '<div class="bg-white rounded p-2"><p class="font-bold text-blue-600">' + score.oportunidade + '</p><p class="text-slate-500">Oportunidade</p></div>';
-      html += '<div class="bg-white rounded p-2"><p class="font-bold text-red-600">' + score.risco + '</p><p class="text-slate-500">Risco</p></div>';
-      html += '</div></div>';
-      html += '<div class="bg-slate-50 rounded-lg p-3 text-sm"><p class="text-slate-600"><strong>Analise:</strong> ' + analise + '</p><p class="text-slate-600 mt-1"><strong>Recomendacao:</strong> ' + recomendacao + '</p></div>';
-      html += '<button id="addLeadBtn" class="w-full rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700">Adicionar como Lead</button>';
-      html += '</div>';
-
-      cnpjResult.innerHTML = html;
-      cnpjResult.classList.remove('hidden');
-
-      document.getElementById('addLeadBtn').addEventListener('click', function() {
-        var telefone = data.ddd_telefone_1;
-        if (telefone && telefone.length === 11) {
-          telefone = '(' + telefone.substring(0,2) + ') ' + telefone.substring(2);
-        }
-        var novoLead = {
-          id: Date.now().toString(),
-          razao_social: data.razao_social,
-          cnpj: data.cnpj,
-          email: data.email || null,
-          telefone: telefone,
-          whatsapp_valido: !!data.ddd_telefone_1,
-          cidade: data.municipio || 'N/A',
-          estado: data.uf || 'N/A',
-          regiao: getRegiao(data.uf),
-          cnae: cnae,
-          cnae_descricao: data.descricao_cnae_fiscal || cnaesDescricao[cnae],
-          tempo_mercado_anos: score.mercado_anos,
-          website: null,
-          website_ativo: false,
-          google_maps_url: null,
-          google_maps_ativo: false,
-          media_reviews: 0,
-          total_reviews: 0,
-          instagram: null,
-          instagram_ativo: false,
-          instagram_seguidores: 0,
-          facebook: null,
-          facebook_ativo: false,
-          score_fit_estrutural: score.fit_estrutural,
-          score_oportunidade: score.oportunidade,
-          score_risco: score.risco,
-          lead_score: score.total,
-          prioridade: prioridade,
-          justificativa_ia: analise,
-          recomendacao_ia: recomendacao
-        };
-
-        adicionarLeadNaTabela(novoLead);
-        cnpjModal.classList.add('hidden');
-        cnpjModal.classList.remove('flex');
-      });
-    };
-
-    xhr.onerror = function() {
-      cnpjLoading.classList.add('hidden');
-      cnpjAlert.className = 'rounded-lg p-4 bg-red-50 border border-red-200';
-      cnpjAlert.innerHTML = '<p class="text-sm font-medium text-red-800">Erro de conexao. Tente novamente.</p>';
-      cnpjAlert.classList.remove('hidden');
-    };
-
-    xhr.send();
-  });
-})();
-</script>
-</body>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta
+			name="description"
+			content="Dashboard de inteligencia comercial da Prospecttur para agencias de viagens."
+		/>
+		<title>Prospecttur - Inteligencia Comercial para Agencias de Viagens</title>
+	</head>
+	<body class="min-h-screen bg-slate-50 text-slate-950 antialiased">
+		<main class="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+			<header class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+				<div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+					<div>
+						<p class="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600">
+							Prospeccao B2B
+						</p>
+						<h1 class="mt-2 bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 bg-clip-text text-4xl font-bold tracking-normal text-transparent sm:text-5xl">
+							Prospecttur
+						</h1>
+						<p class="mt-3 text-base text-slate-600 sm:text-lg">
+							Inteligencia Comercial para Agencias de Viagens
+						</p>
+					</div>
+
+					<div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+						<div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+							<p class="text-xs font-medium uppercase tracking-wide text-slate-500">Leads</p>
+							<p id="lead-count" class="mt-1 text-2xl font-bold text-slate-950">
+								{initialLeads.length} leads qualificados
+							</p>
+						</div>
+						<button
+							id="refresh-btn"
+							type="button"
+							class="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+						>
+							<svg
+								id="refresh-icon"
+								class="h-4 w-4"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								aria-hidden="true"
+							>
+								<path stroke-linecap="round" stroke-linejoin="round" d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4" />
+								<path stroke-linecap="round" stroke-linejoin="round" d="M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4" />
+							</svg>
+							<span id="refresh-label">Atualizar Dados</span>
+						</button>
+					</div>
+				</div>
+			</header>
+
+			<section
+				id="error-banner"
+				class:list={[
+					'rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700',
+					initialError ? '' : 'hidden',
+				]}
+			>
+				<div class="flex gap-3">
+					<svg class="mt-0.5 h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+					</svg>
+					<p>
+						<strong class="font-semibold">Nao foi possivel carregar os leads.</strong>
+						<span id="error-message">{initialError}</span>
+					</p>
+				</div>
+			</section>
+
+			<section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+				<div class="border-b border-slate-200 p-4 sm:p-6">
+					<div class="flex flex-col gap-4 lg:flex-row lg:items-end">
+						<div class="flex-1">
+							<label for="search-input" class="text-xs font-medium uppercase tracking-wide text-slate-500">
+								Buscar por razao social
+							</label>
+							<div class="relative mt-1.5">
+								<svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+									<path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.3-4.3m1.3-5.2a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" />
+								</svg>
+								<input
+									id="search-input"
+									type="search"
+									placeholder="Digite o nome da agencia..."
+									class="h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100"
+								/>
+							</div>
+						</div>
+
+						<div class="grid gap-4 sm:grid-cols-2 lg:w-[28rem]">
+							<div>
+								<label for="score-filter" class="text-xs font-medium uppercase tracking-wide text-slate-500">
+									Score
+								</label>
+								<select
+									id="score-filter"
+									class="mt-1.5 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100"
+								>
+									<option value="all">Todos os scores</option>
+									<option value="high">Alta >= 80</option>
+									<option value="medium">Media 50-79</option>
+									<option value="low">Baixa &lt; 50</option>
+								</select>
+							</div>
+
+							<div>
+								<label for="cnae-filter" class="text-xs font-medium uppercase tracking-wide text-slate-500">
+									CNAE
+								</label>
+								<select
+									id="cnae-filter"
+									class="mt-1.5 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100"
+								>
+									<option value="all">Todos os CNAEs</option>
+									{cnaes.map((cnae) => <option value={cnae}>{cnae}</option>)}
+								</select>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div id="table-wrapper" class="overflow-x-auto">
+					<table class="w-full min-w-[920px] text-left text-sm">
+						<thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+							<tr>
+								<th class="px-4 py-3 font-semibold sm:px-6">Razao Social</th>
+								<th class="px-4 py-3 font-semibold sm:px-6">CNAE</th>
+								<th class="px-4 py-3 font-semibold sm:px-6">Instagram</th>
+								<th class="px-4 py-3 font-semibold sm:px-6">Lead Score</th>
+								<th class="px-4 py-3 font-semibold sm:px-6">Justificativa IA</th>
+								<th class="px-4 py-3 font-semibold sm:px-6">Acoes</th>
+							</tr>
+						</thead>
+						<tbody id="leads-tbody" class="divide-y divide-slate-100">
+							<tr>
+								<td colspan="6" class="px-6 py-16 text-center text-sm text-slate-500">
+									Carregando leads...
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</section>
+		</main>
+
+		<script id="initial-leads-data" type="application/json" set:html={initialPayload} />
+		<script>
+			import { initLeadsDashboard } from '../scripts/leads-dashboard';
+
+			const payloadEl = document.getElementById('initial-leads-data');
+			const payload = payloadEl?.textContent
+				? JSON.parse(payloadEl.textContent)
+				: { initialLeads: [], initialError: 'Dados iniciais indisponiveis.' };
+
+			initLeadsDashboard(payload);
+		</script>
+	</body>
 </html>
